@@ -119,7 +119,7 @@ class FieldElementTest(TestCase):
 
 
 class Point:
-
+    zero = 0
     def __init__(self, x, y, a, b):
         self.a = a
         self.b = b
@@ -127,33 +127,47 @@ class Point:
         self.y = y
         if self.x is None and self.y is None:
             return
-        if self.y**2 != self.x**3 + a * x + b:
-            raise ValueError('({}, {}) is not on the curve'.format(x, y))
+        if self.y**2 != self.x**3 + self.a*self.x + self.b:
+            raise ValueError(f'Point ({x}, {y}) is not on the curve')
 
     def __eq__(self, other):
-        return self.x == other.x and self.y == other.y \
-            and self.a == other.a and self.b == other.b
+        return self.a == other.a and self.b == other.b and self.x == other.x and self.y == other.y
 
     def __ne__(self, other):
-        # this should be the inverse of the == operator
-        raise NotImplementedError
+        return not (self == other)
 
     def __repr__(self):
         if self.x is None:
             return 'Point(infinity)'
         else:
-            return 'Point({},{})_{}_{}'.format(self.x, self.y, self.a, self.b)
+            return f'Point({self.x}, {self.y})_{self.a}_{self.b}'
 
     def __add__(self, other):
         if self.a != other.a or self.b != other.b:
-            raise TypeError('Points {}, {} are not on the same curve'.format(self, other))
+         raise TypeError(f'Point ({x}, {y}) is not on the curve')
 
         if self.x is None:
             return other
         if other.x is None:
             return self
 
-        raise NotImplementedError
+        if self.x == other.x and self.y != other.y:
+            return self.__class__(None, None, self.a, self.b)
+
+        if self.x != other.x:
+            slope = (other.y - self.y) / (other.x - self.x)
+            x_3 = slope**2 - self.x - other.x
+            y_3 = slope * (self.x - x_3) - self.y
+            return self.__class__(x_3, y_3, self.a, self.b)
+
+        if self == other:
+            slope = (3 * self.x**2 + self.a) / (2 * self.y)
+            x_3 = slope**2 - 2 * self.x
+            y_3 = slope*(self.x - x_3) - self.y
+            return self.__class__(x_3, y_3, self.a, self.b)
+
+        if self == other and self.y == self.zero:
+            return self.__class__(None, None, self.a, self.b)
 
 
 class PointTest(TestCase):
@@ -180,3 +194,16 @@ class PointTest(TestCase):
     def test_add2(self):
         a = Point(x=-1, y=1, a=5, b=7)
         self.assertEqual(a + a, Point(x=18, y=-77, a=5, b=7))
+
+
+if __name__ == '__main__':
+    print('hello')
+    a = 5
+    b = 7
+    for (x, y) in ((2, 4), (-1, -1), (18, 77), (5, 7)):
+        try:
+            p1 = Point(x, y, a, b)
+        except ValueError:
+            print(f'({x}, {y}) is not on the curve')
+        else:
+            print(f'point ({x}, {y}) is on the curve')
