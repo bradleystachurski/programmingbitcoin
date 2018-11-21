@@ -294,7 +294,21 @@ class ECCTest(TestCase):
             (47, 71, 117, 141, 60, 139),
             (143, 98, 76, 66, 47, 71),
         )
-        raise NotImplementedError
+
+        # iterate over the additions
+        for x1_raw, y1_raw, x2_raw, y2_raw, x3_raw, y3_raw in additions:
+            x1 = FieldElement(x1_raw, prime)
+            x2 = FieldElement(x2_raw, prime)
+            x3 = FieldElement(x3_raw, prime)
+            y1 = FieldElement(y1_raw, prime)
+            y2 = FieldElement(y2_raw, prime)
+            y3 = FieldElement(y3_raw, prime)
+
+            p1 = Point(x1, y1, a, b)
+            p2 = Point(x2, y2, a, b)
+            p3 = Point(x3, y3, a, b)
+
+            self.assertEqual(p1 + p2, p3)
 
     def test_rmul(self):
         # tests the following scalar multiplications
@@ -453,7 +467,7 @@ class PrivateKey:
         if z > N:
             z -= N
         z_bytes = z.to_bytes(32, 'big')
-        secret_bytes = self.secret.to_bytes(32, 'big')
+        secret_bytes = self.secret.to_bytes(3s, 'big')
         s256 = hashlib.sha256
         k = hmac.new(k, v + b'\x00' + secret_bytes + z_bytes, s256).digest()
         v = hmac.new(k, v, s256).digest()
@@ -475,3 +489,147 @@ class PrivateKeyTest(TestCase):
         z = randint(0, 2**256)
         sig = pk.sign(z)
         self.assertTrue(pk.point.verify(z, sig))
+
+
+def exercise_1():
+    prime = 223
+    def on_curve(x, y, a=FieldElement(0, prime), b=FieldElement(7, prime)):
+        return y**2 == x**3 + a*x + b
+    for (x, y) in ((192, 105), (17, 56), (200, 119), (1, 193), (42, 99)):
+        print(f'Point({x}, {y})')
+        print(on_curve(FieldElement(x, prime), FieldElement(y, prime)))
+
+def exercise_2():
+    prime = 223
+    a = FieldElement(0, prime)
+    b = FieldElement(7, prime)
+    for (x1, y1, x2, y2) in ((170, 142, 60, 139), (47, 71, 17, 56), (143, 98, 76, 66)):
+        p1 = Point(FieldElement(x1, prime), FieldElement(y1, prime), a, b)
+        p2 = Point(FieldElement(x2, prime), FieldElement(y2, prime), a, b)
+        print(p1 + p2)
+
+def exercise_3():
+    prime = 223
+    a = FieldElement(0, prime)
+    b = FieldElement(7, prime)
+
+    mult_points = ((2, 192, 105), (2, 143, 98), (2, 47, 71), (4, 47, 71), (8, 47, 71), (21, 47, 71))
+    for (scalar, x, y) in  mult_points:
+        point = Point(FieldElement(x, prime), FieldElement(y, prime), a, b)
+        print(scalar * point)
+
+
+def exercise_4():
+    prime = 223
+    a = FieldElement(0, prime)
+    b = FieldElement(7, prime)
+
+    for (scalar, x, y) in ((2, 192, 105), (2, 143, 98), (2, 47, 71), (4, 47, 71), (8, 47, 71), (21, 47, 71)):
+        point = Point(FieldElement(x, prime), FieldElement(y, prime), a, b)
+        print(scalar * point)
+
+def exercise_5():
+    prime = 223
+    a = FieldElement(0, prime)
+    b = FieldElement(7, prime)
+    x = FieldElement(15, prime)
+    y = FieldElement(86, prime)
+    point = Point(x, y, a, b)
+    inf = Point(None, None, a, b)
+
+    product = point
+    count = 1
+
+    while product != inf:
+        product += point
+        count += 1
+    print(count)
+
+def scratch():
+    prime = 223
+    a = FieldElement(0, prime)
+    b = FieldElement(7, prime)
+    x = FieldElement(15, prime)
+    y = FieldElement(86, prime)
+
+    coef = 77
+    current = Point(x, y, a, b)
+    result = Point(None, None, a, b)
+    while coef:
+        print('\n\n=================\n\n')
+        print(f'coef: {coef}')
+        print(f'current: {current}')
+        print(f'result: {result}')
+        if coef & 1:
+            print(f'coef & 1: {coef & 1}')
+            print(f'result before += current: {result}')
+            result += current
+            print(f'result after += current: {result}')
+        print(f'current before adding to itself: {current}')
+        current += current
+        print(f'current after adding to itself: {current}')
+        print(f'coef before bitshift: {coef}')
+        coef >>= 1
+        print(f'coef after bitshift: {coef}')
+    print(result)
+    return result
+
+def verify_points():
+    gx = 0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798
+    gy = 0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8
+    p = 2 ** 256 - 2**32 - 977
+    print(gy ** 2 % p == (gx**3 + 7) % p)
+
+def exercise_6():
+    point = S256Point(0x887387e452b8eacc4acfde10d9aaf7f6d9a0f975aabb10d006e4da568744d06c,
+         0x61de6d95231cd89026e286df3b6ae4a894a3378e393e93a0f45b666329a0ae34)
+
+    def sig_1():
+        # signature 1
+        z = 0xec208baa0fc1c19f708a9ca96fdeff3ac3f230bb4a7ba4aede4942ad003c0f60
+        r = 0xac8d1c87e51d0d441be8b3dd5b05c8795b48875dffe00b7ffcfac23010d3a395
+        s = 0x68342ceff8935ededd102dd876ffd6ba72d6a427a3edb13d26eb0781cb423c4
+
+        u = z * pow(s, N - 2, N) % N
+        v = r * pow(s, N - 2, N) % N
+        print(f'Sig 1 valid?: {((u*G + v*point).x.num == r)}')
+
+
+    def sig_2():
+        # signature 2
+        z = 0x7c076ff316692a3d7eb3c3bb0f8b1488cf72e1afcd929e29307032997a838a3d
+        r = 0xeff69ef2b1bd93a66ed5219add4fb51e11a840f404876325a1e8ffe0529a2c
+        s = 0xc7207fee197d27c618aea621406f6bf5ef6fca38681d82b2f06fddbdce6feab6
+
+        u = z * pow(s, N - 2, N) % N
+        v = r * pow(s, N - 2, N) % N
+        print(f'Sig 1 valid?: {((u*G + v*point).x.num == r)}')
+
+    sig_1()
+    sig_2()
+
+def exercise_7():
+    from helper import hash256
+    from random import randint
+    e = 12345
+    z = int.from_bytes(hash256(b'Programming Bitcoin!'), 'big')
+    k = randint(0, N)
+    r = (k*G).x.num
+    k_inv = pow(k, N - 2, N)
+    s = (z + r*e) * k_inv % N
+    print(f'r: {r}, s: {s}')
+    print(f'point: {e*G}')
+    print(f'z: {hex(z)}')
+    print(f'r: {hex(r)}')
+    print(f's: {hex(s)}')
+
+if __name__ == '__main__':
+    # exercise_1()
+    # exercise_2()
+    # exercise_3()
+    # exercise_4()
+    # exercise_5()
+    # scratch()
+    # verify_points()
+    # exercise_6()
+    exercise_7()
