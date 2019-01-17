@@ -1,3 +1,4 @@
+from pprint import pprint
 from unittest import TestCase
 
 
@@ -23,7 +24,9 @@ class FieldElement:
 
     def __ne__(self, other):
         # this should be the inverse of the == operator
-        raise NotImplementedError
+        if other is None:
+            return True
+        return self.num != other.num or self.prime != other.prime
 
     # tag::source2[]
     def __add__(self, other):
@@ -39,7 +42,8 @@ class FieldElement:
         # self.num and other.num are the actual values
         # self.prime is what we need to mod against
         # We return an element of the same class
-        raise NotImplementedError
+        num = (self.num - other.num) % self.prime
+        return self.__class__(num, self.prime)
 
     def __mul__(self, other):
         if self.prime != other.prime:
@@ -47,7 +51,8 @@ class FieldElement:
         # self.num and other.num are the actual values
         # self.prime is what we need to mod against
         # We return an element of the same class
-        raise NotImplementedError
+        num = (self.num * other.num) % self.prime
+        return self.__class__(num, self.prime)
 
     # tag::source3[]
     def __pow__(self, exponent):
@@ -64,7 +69,8 @@ class FieldElement:
         # this means:
         # 1/n == pow(n, p-2, p)
         # We return an element of the same class
-        raise NotImplementedError
+        num = self.num * pow(other.num, self.prime - 2, self.prime) % self.prime
+        return self.__class__(num, self.prime)
 
 
 class FieldElementTest(TestCase):
@@ -114,3 +120,31 @@ class FieldElementTest(TestCase):
         a = FieldElement(4, 31)
         b = FieldElement(11, 31)
         self.assertEqual(a**-4 * b, FieldElement(13, 31))
+
+def exercie_5():
+    prime = 19
+    val_dict = {}
+    for k in (1, 2, 3, 7, 13, 18):
+        values = val_dict.setdefault(k, [])
+        for val in range(0, prime):
+            values.append(k * val % prime)
+
+    for key in val_dict:
+        val_dict[key].sort()
+    pprint(val_dict)
+
+def exercise_7():
+    primes = [7, 11, 17, 31, 43]
+
+    field_dict = {}
+    for p in primes:
+        values = field_dict.setdefault(p, [])
+        for val in range(1, p):
+            element = FieldElement(val, p)
+            values.append(element**(p - 1))
+
+    pprint(field_dict)
+
+if __name__ == '__main__':
+    # exercie_5()
+    exercise_7()
