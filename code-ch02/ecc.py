@@ -142,7 +142,8 @@ class Point:
 
     def __ne__(self, other):
         # this should be the inverse of the == operator
-        raise NotImplementedError
+        return self.x != other.x or self.y != other.y \
+            or self.a != other.a or self.b != other.b
 
     def __repr__(self):
         if self.x is None:
@@ -163,20 +164,30 @@ class Point:
 
         # Case 1: self.x == other.x, self.y != other.y
         # Result is point at infinity
+        if self.x == other.x and self.y != other.y:
+            return self.__class__(None, None, self.a, self.b)
 
         # Case 2: self.x ≠ other.x
         # Formula (x3,y3)==(x1,y1)+(x2,y2)
         # s=(y2-y1)/(x2-x1)
         # x3=s**2-x1-x2
         # y3=s*(x1-x3)-y1
+        if self.x != other.x:
+            slope = (other.y - self.y) / (other.x - self.x)
+            x_3 = slope**2 - self.x - other.x
+            y_3 = slope * (self.x - x_3) - self.y
+            return self.__class__(x_3, y_3, self.a, self.b)
 
         # Case 3: self == other
         # Formula (x3,y3)=(x1,y1)+(x1,y1)
         # s=(3*x1**2+a)/(2*y1)
         # x3=s**2-2*x1
         # y3=s*(x1-x3)-y1
-
-        raise NotImplementedError
+        if self == other:
+            slope = (3 * self.x**2 + self.a) / (2 * self.y)
+            x_3 = slope**2 - 2 * self.x
+            y_3 = slope * (self.x - x_3) - self.y
+            return self.__class__(x_3, y_3, self.a, self.b)
 
 
 class PointTest(TestCase):
@@ -203,3 +214,45 @@ class PointTest(TestCase):
     def test_add2(self):
         a = Point(x=-1, y=1, a=5, b=7)
         self.assertEqual(a + a, Point(x=18, y=-77, a=5, b=7))
+
+### Exercise 1
+#
+# Determine which of these points are on the curve \\(y^{2}\\)=\\(x^{3}\\)+5x+7:
+#
+# (2,4), (-1,-1), (18,77), (5,7)
+#
+# Exercise 1
+
+# (2,4), (-1,-1), (18,77), (5,7)
+# equation in python is: y**2 == x**3 + 5*x + 7
+def exercise_1():
+    def on_curve(x, y):
+        return y**2 == x**3 + 5*x + 7
+
+    points = [(2, 4), (-1, -1), (18, 77), (5, 7)]
+    results = [p for p in points if on_curve(p[0], p[1])]
+
+    print(results)
+    return results
+
+# ### Exercise 4
+#
+# For the curve \\(y^{2}\\)=\\(x^{3}\\)+5x+7, what is (2,5) + (-1,-1)?
+# Exercise 4
+
+# from ecc import Point
+#
+# a = 5
+# b = 7
+# x1, y1 = 2, 5
+# x2, y2 = -1, -1
+#
+# # (x1,y1) + (x2,y2)
+def exercise_2():
+    a, b = 5, 7
+    result = Point(2, 5, a, b) + Point(-1, -1, a, b)
+    print(result)
+
+if __name__ == '__main__':
+    exercise_1()
+    exercise_2()
