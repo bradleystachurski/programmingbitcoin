@@ -690,3 +690,171 @@ class PrivateKeyTest(TestCase):
         pk = PrivateKey(0x1cca23de92fd1862fb5b76e5f4f50eb082165e5191e116c18ed1a6b24be6a53f)
         expected = 'cNYfWuhDpbNM1JWc3c6JTrtrFVxU4AGhUKgw5f93NP2QaBqmxKkg'
         self.assertEqual(pk.wif(compressed=True, testnet=True), expected)
+
+# ### Exercise 1
+#
+# Find the uncompressed SEC format for the Public Key where the Private Key secrets are:
+#
+# * 5000
+# * \\(2018^{5}\\)
+# * 0xdeadbeef12345
+# Exercise 1
+#
+# from ecc import PrivateKey
+#
+# # 5000
+# # 2018**5
+# # 0xdeadbeef12345
+# # privatekey.point is the public key for a private key
+def exercise_1():
+    marker = b'\x04'
+    def print_uncompressed_format(secret):
+        private_key = PrivateKey(secret)
+
+        x_rep = private_key.point.x.num.to_bytes(32, 'big')
+        y_rep = private_key.point.y.num.to_bytes(32, 'big')
+        sec_uncompressed = (marker + x_rep + y_rep).hex()
+        print(sec_uncompressed)
+
+    secrets = [5000, 2018**5, 0xdeadbeef12345]
+    for s in secrets:
+        print_uncompressed_format(s)
+
+# ### Exercise 2
+#
+# Find the Compressed SEC format for the Public Key where the Private Key secrets are:
+#
+# * 5001
+# * \\(2019^{5}\\)
+# * 0xdeadbeef54321
+# # Exercise 2
+#
+# from ecc import PrivateKey
+#
+# # 5001
+# # 2019**5
+# # 0xdeadbeef54321
+def exercise_2():
+    def print_compressed_format(secret):
+        private_key = PrivateKey(secret)
+        x_rep = private_key.point.x.num.to_bytes(32, 'big')
+        is_even = private_key.point.y.num % 2 == 0
+        if is_even:
+            marker = b'\x02'
+            print((marker + x_rep).hex())
+        else:
+            marker = b'\x03'
+            print((marker + x_rep).hex())
+
+    secrets = [5001, 2019**5, 0xdeadbeef54321]
+    for s in secrets:
+        print_compressed_format(s)
+
+# ### Exercise 3
+#
+# Find the DER format for a signature whose `r` and `s` values are:
+#
+# * r =
+#
+# `0x37206a0610995c58074999cb9767b87af4c4978db68c06e8e6e81d282047a7c6`
+#
+# * s =
+#
+# `0x8ca63759c1157ebeaec0d03cecca119fc9a75bf8e6d0fa65c841c8e2738cdaec`
+# # Exercise 3
+#
+# from ecc import Signature
+#
+# r = 0x37206a0610995c58074999cb9767b87af4c4978db68c06e8e6e81d282047a7c6
+# s = 0x8ca63759c1157ebeaec0d03cecca119fc9a75bf8e6d0fa65c841c8e2738cdaec
+def exercise_3():
+    r = 0x37206a0610995c58074999cb9767b87af4c4978db68c06e8e6e81d282047a7c6
+    s = 0x8ca63759c1157ebeaec0d03cecca119fc9a75bf8e6d0fa65c841c8e2738cdaec
+    sig = Signature(r, s)
+    print(sig.der().hex())
+
+# ### Exercise 4
+#
+# Convert the following hex to binary and then to Base58:
+#
+# * `7c076ff316692a3d7eb3c3bb0f8b1488cf72e1afcd929e29307032997a838a3d`
+# * `eff69ef2b1bd93a66ed5219add4fb51e11a840f404876325a1e8ffe0529a2c`
+# * `c7207fee197d27c618aea621406f6bf5ef6fca38681d82b2f06fddbdce6feab6`
+# # Exercise 4
+#
+# from helper import encode_base58
+#
+# # 7c076ff316692a3d7eb3c3bb0f8b1488cf72e1afcd929e29307032997a838a3d
+# # eff69ef2b1bd93a66ed5219add4fb51e11a840f404876325a1e8ffe0529a2c
+# # c7207fee197d27c618aea621406f6bf5ef6fca38681d82b2f06fddbdce6feab6
+def exercise_4():
+    from helper import encode_base58
+    hexes = [
+        '7c076ff316692a3d7eb3c3bb0f8b1488cf72e1afcd929e29307032997a838a3d',
+        'eff69ef2b1bd93a66ed5219add4fb51e11a840f404876325a1e8ffe0529a2c',
+        'c7207fee197d27c618aea621406f6bf5ef6fca38681d82b2f06fddbdce6feab6'
+    ]
+    for h in hexes:
+        print(encode_base58(bytes.fromhex(h)).decode('ascii'))
+
+# ### Exercise 5
+#
+# Find the address corresponding to Public Keys whose Private Key secrets are:
+#
+# * 5002 (use uncompressed SEC, on testnet)
+# * \\(2020^{5}\\) (use compressed SEC, on testnet)
+# * 0x12345deadbeef (use compressed SEC on mainnet)
+# # Exercise 5
+#
+# from ecc import PrivateKey
+#
+# # 5002 (use uncompressed SEC, on testnet)
+# # 2020**5 (use compressed SEC, on testnet)
+# # 0x12345deadbeef (use compressed SEC on mainnet)
+def exercise_5():
+    secret = 5002
+    priv_key = PrivateKey(secret)
+    print(priv_key.point.address(compressed=False, testnet=True))
+
+    secret = 2020**5
+    priv_key = PrivateKey(secret)
+    print(priv_key.point.address(compressed=True, testnet=True))
+
+    secret = 0x12345deadbeef
+    priv_key = PrivateKey(secret)
+    print(priv_key.point.address(compressed=True, testnet=False))
+
+# ### Exercise 6
+#
+# Find the WIF for Private Key whose secrets are:
+#
+# * 5003 (compressed, testnet)
+# * \\(2021^{5}\\) (uncompressed, testnet)
+# * 0x54321deadbeef (compressed, mainnet)
+# # Exercise 6
+#
+# from ecc import PrivateKey
+#
+# # 5003
+# # 2021**5
+# # 0x54321deadbeef
+def exercise_6():
+    secret = 5003
+    priv_key = PrivateKey(secret)
+    print(priv_key.wif(compressed=True, testnet=True))
+
+    secret = 2021**5
+    priv_key = PrivateKey(secret)
+    print(priv_key.wif(compressed=False, testnet=True))
+
+    secret = 0x54321deadbeef
+    priv_key = PrivateKey(secret)
+    print(priv_key.wif(compressed=True, testnet=False))
+
+if __name__ == '__main__':
+    exercise_1()
+    exercise_2()
+    exercise_3()
+    exercise_4()
+    exercise_5()
+    exercise_6()
